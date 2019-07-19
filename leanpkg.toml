@@ -1,0 +1,8 @@
+[package]
+name = "rep_theory"
+version = "0.1"
+lean_version = "3.4.2"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "d7283d7f8d9d65f175e6edbaef33bd63cc541d5a"}
