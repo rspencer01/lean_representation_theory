@@ -4,9 +4,13 @@ import order.complete_lattice
 
 variables {α β : Type} [lattice.bounded_lattice α] [lattice.bounded_lattice β]
 
+@[simp]
 def preserves_meet (f : α → β) := ∀ a₁ a₂, f(a₁ ⊓ a₂) = f(a₁) ⊓ f(a₂)
+@[simp]
 def preserves_join (f : α → β) := ∀ a₁ a₂, f(a₁ ⊔ a₂) = f(a₁) ⊔ f(a₂)
+@[simp]
 def preserves_top (f : α → β) := f ⊤ = ⊤ 
+@[simp]
 def preserves_bot (f : α → β) := f ⊥ = ⊥
 
 variables (f : α → β) 
@@ -125,4 +129,24 @@ instance order_is_is_lattice_hom : is_lattice_hom g := {
   preserves_join := @order_isom_preserves_join _ _ _ _ g,
   preserves_top := @order_isom_preserves_top _ _ _ _ g,
   preserves_bot := @order_isom_preserves_bot _ _ _ _ g
+}
+
+variable (A : α)
+
+
+/- TODO This is stronger than needed.  We can just let α be an order_bot and a lattice. -/
+instance : lattice.bounded_lattice (subtype (λ a, a ≤ A)) := {
+  inf := λ x y, ⟨(x : α) ⊓ (y : α), le_trans lattice.inf_le_left x.property ⟩,
+  sup := λ x y, ⟨(x : α) ⊔ (y : α), lattice.sup_le_iff.elim_right ⟨ x.property, y.property ⟩ ⟩,
+  le_sup_left := λ a b, @lattice.le_sup_left α _ a b,
+  le_sup_right := λ a b, @lattice.le_sup_right α _ a b,
+  sup_le := λ a b c h₁ h₂, (@lattice.sup_le_iff α _ _ _ _).elim_right ⟨ h₁ , h₂ ⟩,
+  inf_le_left := λ a b, @lattice.inf_le_left α _ a b,
+  inf_le_right := λ a b, @lattice.inf_le_right α _ a b,
+  le_inf := λ a b c h₁ h₂, (@lattice.le_inf_iff α _ _ _ _).elim_right ⟨ h₁ , h₂ ⟩  ,
+  top := ⟨ A , le_refl A ⟩ ,
+  le_top := λ a, a.property ,
+  bot := ⟨ ⊥ , lattice.bounded_lattice.bot_le A ⟩,
+  bot_le := λ a, @lattice.bot_le α _ a ,
+  ..subtype.partial_order _
 }
