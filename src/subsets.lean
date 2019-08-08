@@ -18,7 +18,7 @@ instance s_has_sup : lattice.has_sup S := ⟨ λ a b, ⟨ (a : α) ⊔ (b : α),
 instance s_has_bot : lattice.has_bot S := ⟨ ⟨ (⊥ : α) , bot' ⟩ ⟩
 instance s_has_top : lattice.has_top S := ⟨ ⟨ (⊤ : α) , top' ⟩ ⟩
 
-instance s_complete_lattice : lattice.bounded_lattice S := {
+instance s_bounded_lattice : lattice.bounded_lattice S := {
     le_refl := assume a, by simp,
     le_antisymm := assume a b h1 h2, set_coe.ext (@lattice.complete_lattice.le_antisymm α _ a b h1 h2),
     le_trans := assume a b c h1 h2, @lattice.complete_lattice.le_trans α _ a b c h1 h2,
