@@ -1,6 +1,8 @@
+/-
 import order.lattice
 import order.bounded_lattice
 import group_theory.category
+import algebra.module
 import linear_algebra.basic
 
 import .quiver
@@ -9,45 +11,59 @@ import .lists
 import .lattices
 import .subsets
 
+#check list.map
+
 open classical
 
 universe u
 
-variables {R : Type} [ring R] {M : modules R} [decidable_eq M.space] [decidable_eq (modules R)]
+variables (R : Type) [ring R] (M : Type) [add_comm_group M] [module R M] [decidable_eq M]
 
-variables (U V : submodules M)
+variables (U V : submodule R M)
 
-class filtration (M : modules R) := 
-  (mods : list (submodules M))
+class filtration := 
+  (mods : list (submodule R M))
   (is_fil : list.chain' (has_le.le) mods)
 
-def quotient' (U : submodules M) : modules R := {
+
+/-
+def quotient' (U : submodule R M) : modules R := {
   space := submodule.quotient U,
   acg := by apply_instance,
   mod := by apply_instance
 }
+-/
 
 def mk_quotient (U V : submodule R (M : Type)) (l : U ≤ V) : Type :=
   submodule.quotient ((submodule.map_subtype.order_iso V).inv_fun ⟨U, l⟩)
 
+/-
 def mk_quotient' (U V : submodule R (M : Type)) : U ≤ V → modules R := λ l, {
   space := mk_quotient U V l,
   acg := by dunfold mk_quotient; apply_instance,
   mod := by dunfold mk_quotient; apply_instance
 }
+-/
 
-def factors (F : filtration M) : list (modules R) := 
-  list.chain'_apply_between mk_quotient' F.mods F.is_fil
+def factors (F : filtration R M) : list Type := 
+  list.chain'_apply_between (mk_quotient R M) F.mods F.is_fil
 
-def extend (N : submodules M) : 
+/-
+def extend (N : submodule R M) : 
   filtration (N : modules R) → filtration (quotient' N) → filtration M := λ F₁ F₂ , {
     mods := (list.map (submodules.lift' R M N) F₁.mods) ++ 
             [N] ++ 
             (list.map (submodule.comap_mkq.order_iso N).to_fun F₂.mods),
     is_fil := sorry
   }
+-/
+variable (F : filtration R M)
 
-variable (F : filtration M)
+variable (h : factors R M F ≠ [])
+
+#check @neg_smul R M _ _ _
+#check @neg_smul R ((factors R M F).head'' h) _ _
+
 
 structure generalised_alperin_diagram :=
   (diagram : quiver)
@@ -68,3 +84,4 @@ theorem t_1_2 (F : filtration M) (D : generalised_alperin_diagram F) :
         intros;
         exact @homo_preserves_lt_1 (@downset D.diagram.vertices (@quiver_vertices_partial D.diagram D.ac)) (submodules M) (s_bounded_lattice _ _ _ _ _) _ D.delta _ A B a
     end
+    -/
