@@ -61,5 +61,6 @@ begin
   exact or.inl (lower_downset a ⟨x, h₂ ⟩ y h₁),
   exact or.inr (lower_downset b ⟨x, h₂ ⟩ y h₁)
 end
+
 instance bounded_lattice_of_downset : lattice.bounded_lattice (downset α) := 
-  s_complete_lattice (downset α) (intersections_of_downsets_are_downsets) (union_of_downsets_are_downsets) (empty_is_downset) (full_set_is_downset)
+  s_bounded_lattice (downset α) (intersections_of_downsets_are_downsets) (union_of_downsets_are_downsets) (empty_is_downset) (full_set_is_downset)
