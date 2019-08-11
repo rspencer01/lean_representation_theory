@@ -1,18 +1,13 @@
 import algebra.module
-import group_theory.category
-import algebra.ring
-
-import category_theory.concrete_category
+import algebra.punit_instances
+import category_theory.types
+import linear_algebra.basic
 
 universe u
 
 open category_theory
 
 variables (R : Type u) [ring R]
-
-/-- A bundled statement that the type `M` is both an additive
-    commutative group and an R-module -/
-class r_mod (M : Type u) extends add_comm_group M , module R M
 
 /-- An example of a module for any ring is the zero module -/
 instance zero_module : module R punit := module.of_core $ 
@@ -21,60 +16,63 @@ instance zero_module : module R punit := module.of_core $
     .. punit.comm_ring, ..}; 
     intros; exact subsingleton.elim _ _
 
-instance zero_r_mod : r_mod R punit := {..zero_module R}
-
-instance add_comm_group_and_module_to_r_mod (M : Type u) [h₁ : add_comm_group M] [h₂ : module R M] : r_mod R M := {..h₁,..h₂}
-
-def is_R_linear_map (M N : Type u) [r_mod R M] [r_mod R N] : (M → N) → Prop := is_linear_map R
-
-/- This is defined in the bundled `linear_map` but here it is defined again
-   because I don't know how to massage it correctly, and doing that would
-   be slower than writing this out. -/
-lemma is_R_linear_map_comp (M N U : Type u) [r_mod R M] [r_mod R N] [r_mod R U] 
-  (g : N → U) (f : M → N) [h₁ : is_R_linear_map R _ _ g] [h₂ : is_R_linear_map R _ _ f] : is_R_linear_map R _ _ (g ∘ f) :=
-  {
-      add := λ x y,  calc
-        (g ∘ f) (x + y) = g ( f (x + y))        : by simp
-                    ... = g ( (f x)+ (f y))     : by rw @is_linear_map.add R _ _ _ _ _ _ _ f h₂ _ _
-                    ... = (g (f x)) + (g (f y)) : by rw @is_linear_map.add R _ _ _ _ _ _ _ g h₁ _ _
-      ,
-      smul := λ c x, calc
-        (g ∘ f) (c • x) = g (f (c • x)) : by simp
-                    ... = g (c • (f x)) : by rw @is_linear_map.smul R _ _ _ _ _ _ _ f h₂ _ _
-                    ... = c • (g (f x)) : by rw @is_linear_map.smul R _ _ _ _ _ _ _ g h₁ _ _
-      ,
-  }
-
-/- This is defined in the bundled `linear_map` but here it is defined again
-   because I don't know how to massage it correctly, and doing that would
-   be slower than writing this out. -/
-lemma is_R_linear_map_id (M : Type u) [r_mod R M] : is_R_linear_map R M M id :=
-  {
-      add := λ x y,  (by repeat {apply id.def}),
-      smul := λ c x, (by repeat {apply id.def}),
-  }
-
 /-- The category of R-modules and their morphisms. -/
-@[reducible] def Module : Type (u+1) := bundled (r_mod R)
+structure Module :=
+  (carrier : Type)
+  (prop_add_comm_group : add_comm_group carrier)
+  (prop_module : module R carrier)
+
+lemma id_is_linear (M : Type) [add_comm_group M] [module R M] : is_linear_map R (@id M) := {
+  add := λ x y,  (by repeat {apply id.def}),
+  smul := λ c x, (by repeat {apply id.def}),
+}
+
+lemma linear_maps_comp (A B C : Type) [add_comm_group A] [module R A] [add_comm_group B] [module R B] [add_comm_group C] [module R C]
+   (f : A → B) (g : B → C) (h₁ : is_linear_map R f) (h₂ : is_linear_map R g)
+  : is_linear_map R (g ∘ f) := {
+  add := λ x y,  (by simp; rw is_linear_map.add R f; rw is_linear_map.add R g),
+  smul := λ c x, (by simp; rw is_linear_map.smul f c; rw is_linear_map.smul g c)
+}
+
+namespace Module 
+  instance : has_coe_to_sort (Module R) :=
+    { S := Type, coe := Module.carrier}
+end Module 
+
+instance Module_add_comm_group (M: Module R) : add_comm_group M := M.prop_add_comm_group
+instance Module_R_module (M: Module R) : module R M := M.prop_module
 
 namespace Module
-  variables (M N : Module R)
+  def of (X : Type) [h₁ : add_comm_group X] [h₂ : module R X] : Module R := ⟨ X , h₁ , h₂⟩
 
-  instance : r_mod R M := M.str
-  instance : add_comm_group M := by apply_instance
-  instance : module R M := by apply_instance
+  instance : has_zero (Module R) := ⟨ of R punit ⟩
 
-  instance concrete_is_module_hom : 
-    concrete_category (is_R_linear_map R) :=
-    { hom_id := (λ α ia, @is_R_linear_map_id R _ α ia ) , 
-      hom_comp := (λ α β γ ia ib ic g f lg lf, @is_R_linear_map_comp R _ α β γ ia ib ic _ _ lg lf )}
+  variables (M N U : Module R)
 
-  def of (X : Type u) [r_mod R X] : Module R := ⟨ X ⟩ 
-  def of' (X : Type u) [add_comm_group X] [module R X] : Module R := ⟨ X ⟩ 
+  instance : category (Module R) := {
+    hom := λ M N, subtype (@is_linear_map R M N _ _ _ _ _),
+    id := λ M, ⟨@id M.1, id_is_linear R M⟩ ,
+    comp := λ A B C f g, ⟨ g.1 ∘ f.1, linear_maps_comp R A B C f.val g.val f.property g.property ⟩ ,
+  }
+ 
+  @[simp] lemma module_id : subtype.val (𝟙 M) = id := rfl
+
+  @[simp] lemma module_hom_comp (f : M ⟶ N) (g : N ⟶ U) :
+    subtype.val (f ≫ g) = g.val ∘ f.val := rfl
+
+  instance : has_coe_to_fun (M ⟶ N) :=
+    { F   := λ f, M → N,
+      coe := λ f, f.1 }
+
+  @[extensionality] lemma hom_ext  {f g : M ⟶ N} : (∀ x : M, f x = g x) → f = g :=
+    λ w, subtype.ext.2 $ funext w
+
+  @[simp] lemma coe_id {M : Module R} : ((𝟙 M) : M → M) = id := rfl
+
+  @[simp] lemma module_hom_coe (val : M → N) (prop) (x : M) :
+  (⟨val, prop⟩ : M ⟶ N) x = val x := rfl
 
   instance hom_is_module_hom {M₁ M₂ : Module R} (f : M₁ ⟶ M₂) :
     is_linear_map R (f : M₁ → M₂) := f.2
-
-  instance : has_zero (Module R) := ⟨ @of R _ punit (zero_r_mod R) ⟩
 
 end Module
