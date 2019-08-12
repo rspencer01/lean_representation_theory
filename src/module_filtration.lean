@@ -17,7 +17,7 @@ variables {R : Type} [ring R] {M : Module R}
 variable (F : filtration (submodule R M))
 
 def subquotient (p : filtration.le_pair (submodule R M)) := 
-  (submodule.comap p.b.subtype p.a).quotient'
+  (submodule.comap p.val.2.subtype p.val.1).quotient'
   
 def is_trivial (M : Module R):= nonempty (M ≅ 0)
 
@@ -28,3 +28,6 @@ def filtration.is_s_filtration (S : set (Module R)) (F : filtration (submodule R
 
 def filtration.is_composition_series (F : filtration (submodule R M)) : Prop
   := filtration.is_s_filtration is_simple F
+
+def filtration.factor_modules (F : filtration (submodule R M)) : list (Module R)
+  := F.factors.map subquotient 
