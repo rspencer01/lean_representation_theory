@@ -12,7 +12,6 @@ variables (bot' : (⊥ : α) ∈ S)
 variables (top' : (⊤ : α) ∈ S)
 
 instance s_has_le : has_le S := ⟨ λ a b, (a : α) ≤ b ⟩
-instance s_has_lt : has_le S := ⟨ λ a b, (a : α) < b ⟩
 instance s_has_inf : lattice.has_inf S := ⟨ λ a b, ⟨ (a : α) ⊓ (b : α), inf' _ _ ⟩ ⟩ 
 instance s_has_sup : lattice.has_sup S := ⟨ λ a b, ⟨ (a : α) ⊔ (b : α), sup' _ _ ⟩ ⟩ 
 instance s_has_bot : lattice.has_bot S := ⟨ ⟨ (⊥ : α) , bot' ⟩ ⟩
@@ -34,7 +33,6 @@ instance s_bounded_lattice : lattice.bounded_lattice S := {
     bot_le := assume a , @lattice.complete_lattice.bot_le α _ a ,
 
     ..s_has_le S,
-    ..s_has_lt S,
     ..s_has_sup S sup',
     ..s_has_inf S inf',
     ..s_has_bot S bot',
