@@ -50,29 +50,30 @@ namespace Module
   variables (M N U : Module R)
 
   instance : category (Module R) := {
-    hom := λ M N, subtype (@is_linear_map R M N _ _ _ _ _),
-    id := λ M, ⟨@id M.1, id_is_linear R M⟩ ,
-    comp := λ A B C f g, ⟨ g.1 ∘ f.1, linear_maps_comp R A B C f.val g.val f.property g.property ⟩ ,
+    hom := λ M N, M →ₗ[R] N,
+    id := λ M, 1 ,
+    comp := λ A B C f g, g.comp f ,
   }
  
-  @[simp] lemma module_id : subtype.val (𝟙 M) = id := rfl
+  @[simp] lemma module_id : linear_map.to_fun (𝟙 M) = id := rfl
 
   @[simp] lemma module_hom_comp (f : M ⟶ N) (g : N ⟶ U) :
-    subtype.val (f ≫ g) = g.val ∘ f.val := rfl
+    ((f ≫ g) : M → U) = g.to_fun ∘ f.to_fun := rfl
 
   instance : has_coe_to_fun (M ⟶ N) :=
     { F   := λ f, M → N,
-      coe := λ f, f.1 }
+      coe := λ f, (f : M → N) }
 
   @[extensionality] lemma hom_ext  {f g : M ⟶ N} : (∀ x : M, f x = g x) → f = g :=
-    λ w, subtype.ext.2 $ funext w
+    λ w, linear_map.ext w
+
+@[extensionality] lemma hom_ext'  {f g : M ⟶ N} : (f : M → N) = g → f = g :=
+    λ w, hom_ext R M N (function.funext_iff.1 w)
+
 
   @[simp] lemma coe_id {M : Module R} : ((𝟙 M) : M → M) = id := rfl
 
-  @[simp] lemma module_hom_coe (val : M → N) (prop) (x : M) :
-  (⟨val, prop⟩ : M ⟶ N) x = val x := rfl
-
   instance hom_is_module_hom {M₁ M₂ : Module R} (f : M₁ ⟶ M₂) :
-    is_linear_map R (f : M₁ → M₂) := f.2
+    is_linear_map R (f : M₁ → M₂) := linear_map.is_linear _
 
 end Module
