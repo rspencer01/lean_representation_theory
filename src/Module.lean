@@ -67,9 +67,8 @@ namespace Module
   @[extensionality] lemma hom_ext  {f g : M ⟶ N} : (∀ x : M, f x = g x) → f = g :=
     λ w, linear_map.ext w
 
-@[extensionality] lemma hom_ext'  {f g : M ⟶ N} : (f : M → N) = g → f = g :=
+  @[extensionality] lemma hom_ext'  {f g : M ⟶ N} : (f : M → N) = g → f = g :=
     λ w, hom_ext R M N (function.funext_iff.1 w)
-
 
   @[simp] lemma coe_id {M : Module R} : ((𝟙 M) : M → M) = id := rfl
 
@@ -77,3 +76,7 @@ namespace Module
     is_linear_map R (f : M₁ → M₂) := linear_map.is_linear _
 
 end Module
+
+instance (M : Type) [add_comm_group M] [module R M] : has_coe (submodule R M) (Module R) := ⟨ λ N, Module.of R N ⟩
+
+def are_isomorphic {R} [ring R] (M₁ M₂ : Module R) := nonempty (M₁ ≅ M₂)

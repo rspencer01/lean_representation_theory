@@ -3,6 +3,7 @@ import data.list.basic
 
 import .lattice_filtration
 import .Module
+import .module_trivialities
 
 import tactic.library_search
 
@@ -19,8 +20,6 @@ variable (F : filtration (submodule R M))
 def subquotient (p : filtration.le_pair (submodule R M)) := 
   (submodule.comap p.val.2.subtype p.val.1).quotient'
   
-def is_trivial (M : Module R):= nonempty (M ≅ 0)
-
 def is_simple (M : Module R) := (¬ is_trivial M) ∧ (∀ (N : submodule R M), N = ⊤ ∨ N = ⊥)
 
 def filtration.is_s_filtration (S : set (Module R)) (F : filtration (submodule R M)) : Prop

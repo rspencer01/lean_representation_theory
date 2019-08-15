@@ -2,41 +2,14 @@ import .Module
 import .lattices
 import logic.function
 import .module_trivialities
+import ring_theory.algebra
 
-variables {R : Type} [ring R]
-
+variables {R : Type} [ring R] (M : Module R) (S₁ S₂ : submodule R M)
 
 @[simp]
-def is_simple (M : Module R) := (¬ is_trivial M) ∧ (∀ (N : submodule R M), N = ⊤ ∨ N = ⊥)
+def is_simple := (¬ is_trivial M) ∧ (∀ (N : submodule R M), N = ⊤ ∨ N = ⊥)
 
-lemma bot_is_trivial (M : Module R) : is_trivial ((⊥ : submodule R M) : Module R) := ⟨{
-  hom := 0,
-  inv := 0,
-  hom_inv_id' := 
-  begin
-    apply Module.hom_ext',
-    intros,
-    rw Module.module_hom_comp,
-    apply function.funext_iff.2,
-    intros,
-    simp[*],
-    exact eq.symm (submodule.eq_zero_of_bot_submodule a)
-   end,
-  inv_hom_id' :=
-  begin
-    apply Module.hom_ext',
-    intros,
-    rw Module.module_hom_comp,
-    simp,
-    apply function.funext_iff.2,
-    intros,
-    simp[*],
-    exact eq.symm (eq_zero_of_zero_module a)
-   end,
-
-}⟩ 
-
-lemma intersection_of_simples_is_left_or_trivial (M : Module R) (S₁ S₂ : submodule R M) :
+lemma intersection_of_simples_is_left_or_trivial :
  (is_simple (S₁ : Module R)) → (is_simple (S₂ : Module R)) → 
  (is_trivial ((S₁ ⊓ S₂ : submodule R M) : Module R)) ∨ ((S₁ ⊓ S₂ : submodule R M) : Module R) = S₁ :=
 begin
@@ -69,5 +42,32 @@ begin
       ... = (⊥ : {a // a ≤ S₁}).val : by rw i
       ... = ⊥ : by refl,
     rw j,
-    exact or.inl (bot_is_trivial _),
+    exact or.inl ⟨ bot_is_trivial _ ⟩ ,
 end
+
+lemma intersection_of_simples_is_right_or_trivial (M : Module R) (S₁ S₂ : submodule R M) :
+ (is_simple (S₁ : Module R)) → (is_simple (S₂ : Module R)) → 
+ (is_trivial ((S₁ ⊓ S₂ : submodule R M) : Module R)) ∨ ((S₁ ⊓ S₂ : submodule R M) : Module R) = S₂ := 
+begin
+  intros,
+  rw lattice.inf_comm,
+  exact intersection_of_simples_is_left_or_trivial M S₂ S₁ a_1 a
+end
+
+lemma intersection_of_simples_is_simple_or_trivial (M : Module R) (S₁ S₂ : submodule R M) :
+ (is_simple (S₁ : Module R)) → (is_simple (S₂ : Module R)) → 
+ (is_trivial ((S₁ ⊓ S₂ : submodule R M) : Module R)) ∨ is_simple ((S₁ ⊓ S₂ : submodule R M) : Module R) := 
+begin
+  intros,
+  cases intersection_of_simples_is_left_or_trivial M S₁ S₂ a a_1,
+  exact or.inl h,
+  rw h,
+  exact or.inr a
+end
+
+theorem isom_is_equiv : equivalence (@are_isomorphic R _) := 
+  ⟨ λ x, ⟨ category_theory.iso.refl x ⟩,
+    λ x y h, h.elim (λ f, ⟨ category_theory.iso.symm f ⟩), 
+    λ x y z h₁ h₂, h₁.elim (λ f, h₂.elim (λ g, ⟨category_theory.iso.trans f g⟩)) ⟩
+
+def isomorphism_class_of_modules := quotient ⟨(@are_isomorphic R _), isom_is_equiv ⟩
