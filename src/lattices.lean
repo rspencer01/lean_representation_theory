@@ -10,10 +10,6 @@ variables {α β : Type} [bounded_lattice α] [bounded_lattice β]
 def preserves_meet (f : α → β) := ∀ a₁ a₂, f(a₁ ⊓ a₂) = f(a₁) ⊓ f(a₂)
 @[simp]
 def preserves_join (f : α → β) := ∀ a₁ a₂, f(a₁ ⊔ a₂) = f(a₁) ⊔ f(a₂)
-@[simp]
-def preserves_top (f : α → β) := f ⊤ = ⊤ 
-@[simp]
-def preserves_bot (f : α → β) := f ⊥ = ⊥
 
 variables (f : α → β) 
 
@@ -42,16 +38,15 @@ end
 class is_lattice_hom :=
   (preserves_meet : preserves_meet f)
   (preserves_join : preserves_join f)
-  (preserves_top : preserves_top f)
-  (preserves_bot : preserves_bot f)
+  (preserves_top : f ⊤ = ⊤)
+  (preserves_bot : f ⊥ = ⊥)
 
 
 variables {γ δ : Type} [bounded_lattice γ] [bounded_lattice δ] (g : ((≤) : γ → γ → Prop)  ≃o ((≤) : δ → δ → Prop))
 
-theorem order_isom_preserves_bot : preserves_bot g :=
+theorem order_isom_preserves_bot : g ⊥ = ⊥ :=
 begin
   intros,
-  dunfold preserves_bot,
   rw eq_bot_iff,
   let p := (order_iso.to_equiv g).inv_fun ⊥,
   have h : ⊥ ≤ p := bot_le,
@@ -64,10 +59,9 @@ begin
   assumption
 end
 
-theorem order_isom_preserves_top : preserves_top g :=
+theorem order_isom_preserves_top : g ⊤ = ⊤  :=
 begin
   intros,
-  dunfold preserves_top,
   rw eq_top_iff,
   let p := (order_iso.to_equiv g).inv_fun ⊤,
   have h : ⊤ ≥ p := le_top,
@@ -126,6 +120,19 @@ begin
   exact le_antisymm i₄ i₁
 end
 
+theorem order_isom_preserves_lt (a₁ a₂ : γ) (g : ((≤) : γ → γ → Prop)  ≃o ((≤) : δ → δ → Prop)) : a₁ < a₂ → g a₁ < g a₂ :=
+begin
+  intros,
+  have h : g a₁ ≤ g a₂ := (order_iso.ord g).elim_left (le_of_lt a),
+  apply lt_of_le_of_ne,
+  assumption,
+  simp,
+  have i := equiv.injective (g.to_equiv),
+  intro,
+  have q : a₁ = a₂ := i a_1,
+  exact not_lt_of_ge (ge_of_eq q) a
+end
+
 instance order_is_is_lattice_hom : is_lattice_hom g := {
   preserves_meet := @order_isom_preserves_meet _ _ _ _ g,
   preserves_join := @order_isom_preserves_join _ _ _ _ g,
@@ -153,5 +160,21 @@ instance : bounded_lattice (subtype (λ a, a ≤ A)) := {
   ..subtype.partial_order _
 }
 
-/- A maximal element is the last element before the top -/
-def maximal {α : Type} [order_top α] : α → Prop := λ x, ∀ y > x, y = ⊤
+/-- A maximal element is a last element before the top -/
+def maximal {α : Type} [order_top α] : α → Prop := λ x, x ≠ ⊤ ∧ ∀ y > x, y = ⊤
+
+/-- A minimal element is a first element after the bottom -/
+def minimal {α : Type} [order_bot α] : α → Prop := λ x, x ≠ ⊥ ∧ ∀ y < x, y = ⊥
+
+theorem eq_top_of_meet_of_distinct_maximals (a₁ a₂ : α) (h₁ : maximal a₁) (h₂ : maximal a₂) (h_neq : a₁ ≠ a₂) : a₁ ⊔ a₂ = ⊤ :=
+begin
+  cases lt_or_eq_of_le (@le_sup_right _ _ a₁ a₂) ,
+    exact h₂.elim_right _ h,
+  have a₁_le : a₁ ≤ a₂ := le_of_sup_eq h.symm,
+  cases lt_or_eq_of_le a₁_le,
+    have q :=  h₁.elim_right _ h_1,
+    have r :=  h₂.elim_left,
+    contradiction,
+  rw [h_1, sup_idem],
+  contradiction
+end
